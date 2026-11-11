@@ -1,0 +1,69 @@
+/* Mobile-first styles. Colors reused from my earlier Skill Swap projects. */
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f7fb;
+  color: #222;
+  line-height: 1.5;
+}
+
+main { max-width: 1000px; margin: 0 auto; padding: 16px; min-height: 70vh; }
+
+.header { background: #243b53; color: white; padding: 12px 16px; }
+.logo { margin: 0 0 8px; font-size: 1.4rem; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav a { color: white; text-decoration: none; padding: 6px 10px; border-radius: 6px; }
+nav a:hover { background: #3d5a80; }
+nav a.active { background: #3d7ea6; }
+
+.footer { background: #243b53; color: white; text-align: center; padding: 16px; }
+
+.hero { background: #d9eaf7; padding: 24px; border-radius: 10px; margin-bottom: 24px; }
+
+.grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+.card { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+.card h3 { margin: 8px 0; }
+.card-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tag { background: #d9eaf7; color: #243b53; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; }
+
+.button {
+  display: inline-block; background: #2c6a8f; color: white; border: none; text-decoration: none;
+  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 1rem;
+}
+.button:hover { background: #1f5273; }
+.button.secondary { background: white; color: #2c6a8f; border: 1px solid #2c6a8f; }
+
+.filters, .form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+.form { background: white; padding: 16px; border-radius: 10px; }
+input, select, textarea { padding: 8px; font-size: 1rem; border: 1px solid #bbb; border-radius: 6px; font-family: inherit; }
+textarea { min-height: 80px; }
+.form .button { align-self: flex-start; margin-top: 8px; }
+
+.error { color: #b00020; }
+
+.books { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.book { background: white; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+.book p { margin: 4px 0; }
+.book img, .no-cover { width: 100%; height: 160px; object-fit: contain; background: #eee; }
+.no-cover { display: flex; align-items: center; justify-content: center; color: #666; }
+
+/* Tablet */
+@media (min-width: 768px) {
+  .header { display: flex; justify-content: space-between; align-items: center; }
+  .logo { margin: 0; }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .books { grid-template-columns: repeat(4, 1fr); }
+  .filters { flex-direction: row; align-items: center; }
+  .filters input { flex: 1; }
+  .hero { padding: 40px; }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+  main { padding: 32px 16px; }
+}
