@@ -1,7 +1,7 @@
 // Open Library Search API: https://openlibrary.org/search.json
-export async function fetchBooks(topic) {
+export async function fetchBooks(topic, signal) {
   const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(topic)}&limit=4&fields=key,title,author_name,cover_i`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) {
     throw new Error("Could not load books");
   }

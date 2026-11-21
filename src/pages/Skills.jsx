@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useSkills } from "../context/SkillsContext";
 import { categories } from "../data/sampleSkills";
 import SkillList from "../components/SkillList";
+import StatusMessage from "../components/StatusMessage";
 
 export default function Skills() {
-  const { skills } = useSkills();
+  const { skills, loading, error, reload } = useSkills();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
 
@@ -29,7 +30,8 @@ export default function Skills() {
           ))}
         </select>
       </div>
-      <SkillList skills={filtered} emptyMessage="No skills match your search." />
+      <StatusMessage loading={loading} error={error} onRetry={reload} loadingText="Loading skills..." />
+      {!loading && !error && <SkillList skills={filtered} emptyMessage="No skills match your search." />}
     </div>
   );
 }

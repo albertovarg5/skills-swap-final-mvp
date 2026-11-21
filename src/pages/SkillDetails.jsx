@@ -1,11 +1,16 @@
 import { Link, useParams } from "react-router-dom";
 import { useSkills } from "../context/SkillsContext";
 import RelatedBooks from "../components/RelatedBooks";
+import StatusMessage from "../components/StatusMessage";
 
 export default function SkillDetails() {
   const { id } = useParams();
-  const { skills, savedIds, toggleSave } = useSkills();
+  const { skills, savedIds, toggleSave, loading, error, reload } = useSkills();
   const skill = skills.find((s) => s.id === Number(id));
+
+  if (loading || error) {
+    return <StatusMessage loading={loading} error={error} onRetry={reload} loadingText="Loading skill..." />;
+  }
 
   if (!skill) {
     return (

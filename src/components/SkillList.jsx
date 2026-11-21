@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+import { skillShape } from "../propTypes";
 import SkillCard from "./SkillCard";
 
 export default function SkillList({ skills, emptyMessage }) {
@@ -12,3 +14,8 @@ export default function SkillList({ skills, emptyMessage }) {
     </div>
   );
 }
+
+SkillList.propTypes = {
+  skills: PropTypes.arrayOf(skillShape).isRequired,
+  emptyMessage: PropTypes.string.isRequired,
+};
