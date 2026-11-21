@@ -120,7 +120,7 @@ Home / Browse / Details / My Skills / Login / Retry error / Mobile:
 3. **Settings → Environment Variables**: add `JWT_SECRET` (random, 32+ chars) for Production (and Preview).
 4. Optional: add `ALLOWED_ORIGIN` = `https://skills-swap-final-mvp.vercel.app`.
 5. Redeploy. The tables and the 6 sample skills are created automatically on the first request.
-6. `vercel.json` sends all non-API routes to `index.html` (so refresh on `/skills/1` works) and sets security headers. `api/[...path].js` handles every `/api/*` request.
+6. `vercel.json` sends all non-API routes to `index.html` (so refresh on `/skills/1` works) and sets security headers. `api/index.js` handles every `/api/*` request (a `/api/:path*` rewrite in `vercel.json` points all nested API URLs at it).
 
 ## Known limitations / future improvements
 - The 1-hour session has no refresh token; users log in again after it expires.

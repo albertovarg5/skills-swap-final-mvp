@@ -1,4 +1,4 @@
-// Vercel serverless entry. Catch-all: Vercel sends every /api/* request here.
+// Vercel serverless entry. vercel.json rewrites every /api/* request here (the file-based [...path] catch-all 404s on nested paths like /api/auth/login); req.url keeps the original path for Express.
 import { createApp } from "../server/app.js";
 import { createDb } from "../server/db.js";
 
