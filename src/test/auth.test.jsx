@@ -163,3 +163,37 @@ describe("session persistence and expiration", () => {
     expect(stored).not.toMatch(/password123|token|eyJ/);
   });
 });
+
+describe("navbar auth state", () => {
+  it("logged out: shows Log in and Register, no Log out", async () => {
+    renderApp("/");
+    expect(await screen.findByRole("link", { name: "Log in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
+  });
+
+  it("logged in: shows the user name and Log out, no Log in/Register", async () => {
+    await signUpViaApi("Ana Lopez");
+    renderApp("/");
+    expect(await screen.findByText("Hi, Ana Lopez")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Log in" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Register" })).not.toBeInTheDocument();
+  });
+
+  it("logout from Home calls the API, clears the cookie, and goes to Log in", async () => {
+    await signUpViaApi();
+    renderApp("/");
+    await userEvent.click(await screen.findByRole("button", { name: "Log out" }));
+    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
+    expect(backend.calls).toContain("POST /api/auth/logout");
+    expect(backend.jar.token).toBeUndefined();
+    expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument();
+  });
+
+  it("keeps the session after a reload (new render with the same cookie)", async () => {
+    await signUpViaApi("Ana Lopez");
+    renderApp("/skills");
+    expect(await screen.findByText("Hi, Ana Lopez")).toBeInTheDocument();
+  });
+});

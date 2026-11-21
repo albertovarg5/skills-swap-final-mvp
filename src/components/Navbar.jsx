@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useSkills } from "../context/SkillsContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,6 +8,11 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false); // mobile menu
   const close = () => setOpen(false);
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <header className="header">
@@ -23,7 +28,7 @@ export default function Navbar() {
         {user ? (
           <>
             <span className="user-name">Hi, {user.name}</span>
-            <button className="link-button" type="button" onClick={logout}>Log out</button>
+            <button className="logout-button" type="button" onClick={handleLogout}>Log out</button>
           </>
         ) : (
           <>
