@@ -1,5 +1,6 @@
 // @vitest-environment node
 import request from "supertest";
+import { vi } from "vitest";
 import jwt from "jsonwebtoken";
 import { createApp } from "./app.js";
 import { createDb } from "./db.js";
@@ -197,5 +198,47 @@ describe("error handling", () => {
     const res = await request(app).post("/api/auth/login").set("Content-Type", "application/json").send("{bad");
     expect(res.status).toBe(400);
     expect(res.text).not.toMatch(/SyntaxError|at /);
+  });
+});
+
+describe("production config (regression: register/login returned 500 on Vercel)", () => {
+  const saved = { env: process.env.NODE_ENV, secret: process.env.JWT_SECRET };
+  afterEach(() => {
+    process.env.NODE_ENV = saved.env;
+    process.env.JWT_SECRET = saved.secret;
+    vi.restoreAllMocks();
+  });
+
+  it.each([["missing", undefined], ["too short", "short"]])("%s JWT_SECRET: fails clearly, logs why, creates no account", async (_, secret) => {
+    const db = await createDb(); // (DATABASE_URL is checked separately; PGlite stands in for Neon here)
+    process.env.NODE_ENV = "production";
+    if (secret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = secret;
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const local = createApp(db);
+    const res = await request(local).post("/api/auth/register").send({ ...user, email: "prod@example.com" });
+    expect(res.status).toBe(500);
+    expect((await db.query("SELECT 1 FROM users")).rows).toHaveLength(0);
+    const logged = log.mock.calls.flat().join(" ");
+    expect(logged).toMatch(/JWT_SECRET/);
+    expect(logged).not.toContain(user.password);
+    expect((await request(local).post("/api/auth/login").send(user)).status).toBe(500);
+  });
+
+  it("valid JWT_SECRET in production: register, login and a Secure cookie work", async () => {
+    const db = await createDb();
+    process.env.NODE_ENV = "production";
+    process.env.JWT_SECRET = "p".repeat(40);
+    const local = createApp(db);
+    const reg = await request(local).post("/api/auth/register").send({ ...user, email: "ok@example.com" });
+    expect(reg.status).toBe(201);
+    expect(reg.headers["set-cookie"][0]).toMatch(/Secure/);
+    expect((await request(local).post("/api/auth/login").send({ email: "ok@example.com", password: user.password })).status).toBe(200);
+  });
+
+  it("accepts a same-host POST on a preview domain (Origin check)", async () => {
+    const local = createApp(await createDb());
+    const res = await request(local).post("/api/auth/register").set("Host", "my-app-git-x.vercel.app")
+      .set("Origin", "http://my-app-git-x.vercel.app").send({ ...user, email: "pv@example.com" });
+    expect(res.status).toBe(201);
   });
 });

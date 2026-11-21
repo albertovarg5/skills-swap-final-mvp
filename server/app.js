@@ -95,7 +95,10 @@ export function createApp(db, { loginLimit = 10 } = {}) {
 
   const api = express.Router();
 
-  api.post("/auth/register", authLimiter, async (req, res) => {
+  // Fail before touching the database: a missing/short JWT_SECRET must not leave a half-created account.
+  const needSecret = (req, res, next) => { getSecret(); next(); };
+
+  api.post("/auth/register", authLimiter, needSecret, async (req, res) => {
     const body = req.body ?? {};
     const problem = validateRegistration(body);
     if (problem) return res.status(400).json({ error: problem });
@@ -108,7 +111,7 @@ export function createApp(db, { loginLimit = 10 } = {}) {
     res.status(201).json(startSession(res, rows[0]));
   });
 
-  api.post("/auth/login", authLimiter, async (req, res) => {
+  api.post("/auth/login", authLimiter, needSecret, async (req, res) => {
     const { email, password } = req.body ?? {};
     if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return res.status(400).json({ error: "Please enter your email and password." });
@@ -179,7 +182,8 @@ export function createApp(db, { loginLimit = 10 } = {}) {
   app.use((err, req, res, next) => {
     if (err.type === "entity.parse.failed") return res.status(400).json({ error: "Invalid request body." });
     if (err.type === "entity.too.large") return res.status(413).json({ error: "Request is too large." });
-    console.error(err);
+    // Safe diagnostics for Vercel logs: no body, headers, cookies or connection string.
+    console.error(`[api] ${req.method} ${req.path} failed: ${err.name} ${err.code ?? ""} ${err.message}`);
     res.status(500).json({ error: "Something went wrong. Please try again." });
   });
 
