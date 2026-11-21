@@ -1,42 +1,71 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { sampleSkills } from "../data/sampleSkills";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
+import { api } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const SkillsContext = createContext();
 
-// Reads from localStorage so skills and saved items survive a refresh.
-function load(key, fallback) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function SkillsProvider({ children }) {
-  const [skills, setSkills] = useState(() => load("skills", sampleSkills));
-  const [savedIds, setSavedIds] = useState(() => load("savedIds", []));
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [skills, setSkills] = useState([]);
+  const [savedIds, setSavedIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [attempt, setAttempt] = useState(0); // bump to reload after a failure
+  const userId = user?.id ?? null;
 
+  // Skills are public; saved skills belong to the logged-in user. Wait until we know who is logged in,
+  // and reload when the user changes so "mine" and "saved" are correct.
   useEffect(() => {
-    localStorage.setItem("skills", JSON.stringify(skills));
-    localStorage.setItem("savedIds", JSON.stringify(savedIds));
-  }, [skills, savedIds]);
+    if (authLoading) return;
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    Promise.all([api("/skills"), userId === null ? [] : api("/saved")])
+      .then(([skillList, ids]) => {
+        if (cancelled) return;
+        setSkills(skillList);
+        setSavedIds(ids);
+      })
+      .catch((e) => !cancelled && setError(e.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, [userId, authLoading, attempt]);
 
-  function addSkill(skill) {
-    const newSkill = { ...skill, id: Date.now(), owner: "You", mine: true };
-    setSkills([newSkill, ...skills]);
+  const reload = useCallback(() => setAttempt((n) => n + 1), []);
+  const clearActionError = useCallback(() => setActionError(""), []);
+
+  // Throws on failure so the form can show the message.
+  async function addSkill(skill) {
+    const created = await api("/skills", { method: "POST", body: skill });
+    setSkills((prev) => [created, ...prev]);
   }
 
-  function toggleSave(id) {
-    if (savedIds.includes(id)) {
-      setSavedIds(savedIds.filter((savedId) => savedId !== id));
-    } else {
-      setSavedIds([...savedIds, id]);
+  async function toggleSave(id) {
+    if (userId === null) {
+      navigate("/login", { state: { message: "Please log in to save skills." } });
+      return;
+    }
+    const wasSaved = savedIds.includes(id);
+    const add = (prev) => (prev.includes(id) ? prev : [...prev, id]);
+    const remove = (prev) => prev.filter((savedId) => savedId !== id);
+    setSavedIds(wasSaved ? remove : add); // update the screen right away
+    try {
+      await api(`/saved/${id}`, { method: wasSaved ? "DELETE" : "PUT" });
+    } catch (e) {
+      setSavedIds(wasSaved ? add : remove); // undo if the server said no
+      setActionError(e.message);
     }
   }
 
-  const value = { skills, savedIds, addSkill, toggleSave };
+  const value = { skills, savedIds, loading: loading || authLoading, error, actionError, addSkill, toggleSave, reload, clearActionError };
   return <SkillsContext.Provider value={value}>{children}</SkillsContext.Provider>;
 }
+
+SkillsProvider.propTypes = { children: PropTypes.node.isRequired };
 
 export function useSkills() {
   return useContext(SkillsContext);

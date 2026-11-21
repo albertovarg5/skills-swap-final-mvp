@@ -1,3 +1,4 @@
+import { skillShape } from "../propTypes";
 import { Link } from "react-router-dom";
 import { useSkills } from "../context/SkillsContext";
 
@@ -19,3 +20,5 @@ export default function SkillCard({ skill }) {
     </article>
   );
 }
+
+SkillCard.propTypes = { skill: skillShape.isRequired };
