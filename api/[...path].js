@@ -1,4 +1,4 @@
-// Vercel serverless entry. vercel.json rewrites /api/* here.
+// Vercel serverless entry. Catch-all: Vercel sends every /api/* request here.
 import { createApp } from "../server/app.js";
 import { createDb } from "../server/db.js";
 
