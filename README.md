@@ -94,13 +94,13 @@ npm run build     # production build
 ```
 
 ## Tests
-Last run on my computer: **77 tests passed, 0 failed** (4 test files), `npm run lint` with no errors, `npm run build` succeeded.
-- `server/app.test.js` (25): registration validation, bcrypt hash stored, login errors, logout, JWT expired/forged/`alg:none`, rate limit, protected endpoints, per-user saved skills, CSRF (missing/wrong token, bad origin), no CORS headers, safe errors
+Last run on my computer: **99 tests passed, 0 failed** (5 test files), `npm run lint` with no errors, `npm run build` succeeded.
+- `server/app.test.js` (29): registration validation, bcrypt hash stored, login errors, logout, JWT expired/forged/`alg:none`, rate limit, protected endpoints, per-user saved skills, CSRF (missing/wrong token, bad origin), no CORS headers, safe errors, production config (missing/short `JWT_SECRET`, Secure cookie, preview-domain origin)
 - `src/test/app.test.jsx` (28): the original 14 MVP tests plus Retry, stale responses, missing covers/authors, failed saves, price/XSS input, mobile menu
-- `src/test/bookService.test.js` (4): Open Library automatic retry (network error, 503, no retry on 404 or cancel)
-- `src/test/auth.test.jsx` (20): register/login/logout UI, validation, protected routes and redirects, session restore after refresh, expired token, no token in localStorage
+- `server/routing.test.js` (14): `vercel.json` routes every `/api/*` URL (including nested `/api/auth/*`) to `api/index.js` and the rest to the React app; the API entry point serves register, me, login, logout\n- `src/test/bookService.test.js` (4): Open Library automatic retry (network error, 503, no retry on 404 or cancel)
+- `src/test/auth.test.jsx` (24): register/login/logout UI, navbar logged-in/logged-out states, validation, protected routes and redirects, session restore after refresh, expired token, no token in localStorage
 
-The frontend tests run against the real Express API with an in-memory database (only Open Library is mocked). I also checked the main flows by hand in a real Edge browser (register, login, logout, protected redirect, saved skills after refresh, Retry with Open Library blocked, mobile menu).
+The frontend tests run against the real Express API with an in-memory database (only Open Library is mocked). Production status: the live site is deployed on Vercel with a Neon database. On the live URL I checked with HTTP requests that `/api/skills` returns the 6 sample skills as JSON, and that register, login, logout, session cookie (HttpOnly), saving/unsaving, adding a skill, CSRF/origin rejection (403) and unauthenticated access (401) all work. I also checked the main flows by hand in a real Edge browser (register, login, logout, protected redirect, saved skills after refresh, Retry with Open Library blocked, mobile menu).
 
 ## Screenshots
 Home / Browse / Details / My Skills / Login / Retry error / Mobile:
