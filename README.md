@@ -53,7 +53,7 @@ API endpoints (same origin, `/api`): `POST /auth/register`, `POST /auth/login`, 
 6. Every private endpoint verifies the JWT and only returns/changes the logged-in user's own data.
 
 ## External API
-`src/services/bookService.js` calls Open Library for books related to a skill. It handles: loading state, errors (including network failures), empty results ("No related books found"), missing covers ("No cover"), missing authors ("Unknown author"), a **Retry** button, and stale responses (an `AbortController` plus an ignore flag stop an old request from replacing a newer one).
+`src/services/bookService.js` calls Open Library for books related to a skill. It handles: loading state, errors (including network failures), empty results ("No related books found"), missing covers ("No cover"), missing authors ("Unknown author"), **automatic retry** (2 retries with 500 ms / 1 s backoff for network errors, 429 and 5xx), a manual **Retry** button, and stale responses (an `AbortController` plus an ignore flag stop an old request from replacing a newer one).
 
 ## Security measures
 - Passwords hashed with bcrypt on the server; never returned by the API
@@ -94,9 +94,10 @@ npm run build     # production build
 ```
 
 ## Tests
-Last run on my computer: **73 tests passed, 0 failed** (3 test files), `npm run lint` with no errors, `npm run build` succeeded.
+Last run on my computer: **77 tests passed, 0 failed** (4 test files), `npm run lint` with no errors, `npm run build` succeeded.
 - `server/app.test.js` (25): registration validation, bcrypt hash stored, login errors, logout, JWT expired/forged/`alg:none`, rate limit, protected endpoints, per-user saved skills, CSRF (missing/wrong token, bad origin), no CORS headers, safe errors
 - `src/test/app.test.jsx` (28): the original 14 MVP tests plus Retry, stale responses, missing covers/authors, failed saves, price/XSS input, mobile menu
+- `src/test/bookService.test.js` (4): Open Library automatic retry (network error, 503, no retry on 404 or cancel)
 - `src/test/auth.test.jsx` (20): register/login/logout UI, validation, protected routes and redirects, session restore after refresh, expired token, no token in localStorage
 
 The frontend tests run against the real Express API with an in-memory database (only Open Library is mocked). I also checked the main flows by hand in a real Edge browser (register, login, logout, protected redirect, saved skills after refresh, Retry with Open Library blocked, mobile menu).
