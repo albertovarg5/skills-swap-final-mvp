@@ -30,6 +30,12 @@ Skill details with related books from Open Library:
 
 ![Details](screenshots/details.png)
 
+Login and a registration validation error:
+
+![Login](screenshots/login.png)
+
+![Register error](screenshots/register-error.png)
+
 Mobile view (narrow screen, cards stack in one column):
 
 ![Mobile](screenshots/browse-mobile.png)
@@ -43,25 +49,36 @@ npm test
 
 ## Reused from earlier assignments
 The skill data shape (title, category, price, description), the category filter idea, and the color palette.
-The Unit 9 Express backend was replaced with local sample data so the app can be deployed on Vercel.
+The skill data shape is shared with the Unit 9 Express backend, which is now a real Express + Postgres API (`server/`).
 
-## Deployment
-1. Pushed the project to GitHub.
-2. Imported the repo in Vercel (Vite preset, build command `npm run build`, output folder `dist`).
-3. `vercel.json` sends every route to `index.html` so links like `/skills/1` still work when refreshed.
+## Backend and security
+- Express 5 API: `/api/auth/register|login|logout|me`, `/api/skills`, `/api/saved`.
+- Passwords hashed with bcrypt; sessions are a JWT in an `HttpOnly`, `SameSite` cookie (never in localStorage).
+- CSRF token required on every state-changing request, Origin check, rate limiting on auth routes, `helmet` + CSP headers.
+- All SQL is parameterized; React escapes user text (XSS test included).
+- Frontend: `AuthContext`, login/register pages with validation, protected routes (redirect back after login), API retry, PropTypes.
+
+## Run it with the backend
+```
+cp .env.example .env     # set JWT_SECRET (32+ chars)
+npm run dev:all          # API on :3001 + Vite on :5173
+```
+Without `DATABASE_URL` the API uses an in-memory PGlite database (data resets on restart). Set `DATABASE_URL` to use real Postgres.
+
+## Deployment (Vercel)
+1. Repo imported in Vercel (Vite preset, build `npm run build`, output `dist`).
+2. `vercel.json` sends `/api/*` to the serverless function in `api/index.js` and every other route to `index.html`.
+3. Required environment variables in Vercel: `DATABASE_URL` (hosted Postgres, e.g. Neon), `JWT_SECRET` (32+ random chars), `NODE_ENV=production`.
 
 ## Testing
-`npm test` runs 14 Vitest + React Testing Library tests (pages, search/filter, saving, adding skills, and the books API including the error case). I also checked the live site by hand: all pages load, books show covers and authors, and saved skills stay after a refresh.
+`npm test` runs 73 tests (Vitest, React Testing Library, Supertest): API registration/login/JWT/CSRF/rate limit, protected routes, session expiry, validation, XSS, retry, search/filter, saving, and the books API error case. `npm run lint` and `npm run build` pass.
 
 ## Known Issues
-- There is no backend, so skills and saved items are only stored in this browser (localStorage). Other students cannot see my skills.
-- My Skills can add skills but cannot edit or delete them yet (my wireframe had Edit/Delete).
-- Some books have no cover, so a "No cover" box is shown. Book results are only as good as Open Library's search.
-- If Open Library is slow or down, an error message shows instead of books.
-- No login, so "Offered by" names are just sample data.
+- Free-tier serverless cold starts make the first request slow.
+- My Skills can add skills but cannot edit or delete them yet.
+- Some books have no cover ("No cover" box); if Open Library is down an error message shows instead of books.
 
 ## Future Improvements
 - Edit and delete buttons for My Skills.
-- Node.js backend and database so skills are shared between students.
-- Login so people can only edit their own skills.
 - Messaging / request help, and reviews after a session.
+- Password reset by email.
